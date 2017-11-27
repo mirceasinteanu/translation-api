@@ -16,7 +16,7 @@ onSpeechRequest = (req, res) => {
     const config = {
         encoding: 'LINEAR16',
         sampleRateHertz: 16000,
-        languageCode: 'en-US'
+        languageCode: 'en'
     };
 
     const request = {
