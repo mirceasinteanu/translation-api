@@ -2,11 +2,12 @@ const express = require('express');
 const PORT = process.env.PORT || 5000;
 
 const speech = require('@google-cloud/speech');
+const Translate = require('@google-cloud/translate');
+
 const fs = require('fs');
 
-const client = new speech.SpeechClient({
-    keyFilename: './config/service_account.json'
-});
+const speechClient = new speech.SpeechClient({ keyFilename: './config/service_account.json' });
+const translationClient = new Translate({ keyFilename: './config/service_account.json' });
 
 onSpeechRequest = (req, res) => {
     const fileName = './samples/man2_orig.wav';
@@ -23,23 +24,35 @@ onSpeechRequest = (req, res) => {
         audio, config
     };
 
-    client
+    speechClient
         .recognize(request)
         .then(data => {
             const response = data[0];
             const transcription = response.results.map(result => result.alternatives[0].transcript).join('\n');
 
-            console.log(`Transcription: ${transcription}`);
-            console.log(req);
-
             res.send(`Transcription: ${transcription}`);
         })
         .catch(err => {
-            console.error('ERROR:', err);
             res.send('ERROR:', err);
         });
 };
 
+onLanguagesRequest = (req, res) => {
+    const target = req.query.target || 'en';
+
+    translationClient
+        .getLanguages(target)
+        .then(results => {
+            const languages = results[0];
+
+            res.send({ data: languages });
+        })
+        .catch(err => {
+            res.send({ error: err });
+        });
+};
+
 express()
+    .get('/languages', onLanguagesRequest.bind())
     .get('/speech', onSpeechRequest.bind())
     .listen(PORT, () => console.log(`Listening on ${ PORT }`));
