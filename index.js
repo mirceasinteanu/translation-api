@@ -45,7 +45,7 @@ onLanguagesRequest = (req, res) => {
         .then(results => {
             const languages = results[0];
 
-            res.send({ data: languages });
+            res.send(languages);
         })
         .catch(err => {
             res.send({ error: err });
