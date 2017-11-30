@@ -52,7 +52,23 @@ onLanguagesRequest = (req, res) => {
         });
 };
 
+onTranslateRequest = (req, res) => {
+    const { text, target } = req.query;
+
+    translationClient
+        .translate(text, target)
+        .then(results => {
+            const translation = results[0];
+
+            res.send(translation);
+        })
+        .catch(err => {
+            res.send({ error: err });
+        });
+};
+
 express()
     .get('/languages', onLanguagesRequest.bind())
     .get('/speech', onSpeechRequest.bind())
+    .get('/translate', onTranslateRequest.bind())
     .listen(PORT, () => console.log(`Listening on ${ PORT }`));
