@@ -1,6 +1,10 @@
 const express = require('express');
 const PORT = process.env.PORT || 5000;
 
+const fs = require('fs');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+
 const speech = require('@google-cloud/speech');
 const Translate = require('@google-cloud/translate');
 
@@ -41,11 +45,14 @@ onTranslateRequest = (req, res) => {
         });
 };
 
-upload = (req, res) => {
-    const audioData = req.body.data;
+uploadRecording = (req, res) => {
+    const fileName = req.file.path;
+    const file = fs.readFileSync(fileName);
+    const audioBytes = file.toString('base64');
+
     const languageCode = req.body.lang;
 
-    const audio = { content: audioData };
+    const audio = { content: audioBytes };
     const config = {
         encoding: 'LINEAR16',
         sampleRateHertz: 16000,
@@ -61,17 +68,19 @@ upload = (req, res) => {
             const response = data[0];
             const transcription = response.results.map(result => result.alternatives[0].transcript).join('\n');
 
+            fs.unlink(req.file.path);
             res.send({ transcription });
         })
         .catch(err => {
+            req.unlink(req.file.path);
             res.send(err);
         });
 };
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 app.get('/languages', onLanguagesRequest.bind())
     .get('/translate', onTranslateRequest.bind())
-    .post('/upload', upload.bind())
+    .post('/upload', upload.single('recording'), uploadRecording.bind())
     .listen(PORT, () => console.log(`Listening on ${ PORT }`));
