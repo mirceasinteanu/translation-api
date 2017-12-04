@@ -55,18 +55,16 @@ upload = (req, res) => {
         audio, config
     };
 
-    console.log(request);
-
     speechClient
         .recognize(request)
         .then(data => {
             const response = data[0];
             const transcription = response.results.map(result => result.alternatives[0].transcript).join('\n');
 
-            res.send(200, transcription);
+            res.send({ transcription });
         })
         .catch(err => {
-            res.send(500, err);
+            res.send(err);
         });
 };
 
