@@ -5,6 +5,7 @@ const PORT = process.env.PORT || 5000;
 const speech = require('@google-cloud/speech');
 const Translate = require('@google-cloud/translate');
 
+const bodyParser = require('body-parser');
 const fs = require('fs');
 
 const speechClient = new speech.SpeechClient({ keyFilename: './config/service_account.json' });
@@ -74,7 +75,7 @@ upload = (req, res) => {
     if (!req.files)
         return res.status(400).send('No files were uploaded.');
 
-    const audioData = req.query.data;
+    const audioData = req.body.data;
     const audio = { content: audioData };
     const config = {
         encoding: 'LINEAR16',
@@ -109,7 +110,8 @@ upload = (req, res) => {
     // });
 };
 
-app.use(fileUpload());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/languages', onLanguagesRequest.bind())
     .get('/speech', onSpeechRequest.bind())
