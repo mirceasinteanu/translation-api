@@ -73,13 +73,14 @@ onTranslateRequest = (req, res) => {
 
 upload = (req, res) => {
     const audioData = req.body.data;
+    const languageCode = req.body.lang;
+
     const audio = { content: audioData };
     const config = {
         encoding: 'LINEAR16',
         sampleRateHertz: 16000,
-        languageCode: 'en'
+        languageCode
     };
-
     const request = {
         audio, config
     };
@@ -95,16 +96,6 @@ upload = (req, res) => {
         .catch(err => {
             res.send('ERROR:', err);
         });
-
-    // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-    // let sampleFile = req.files.sampleFile;
-
-    // sampleFile.mv('/recordings/recording.aac', function(err) {
-    //     if (err)
-    //         return res.status(500).send(err);
-    //
-    //     res.send('File uploaded!');
-    // });
 };
 
 app.use(bodyParser.json());
