@@ -72,9 +72,6 @@ onTranslateRequest = (req, res) => {
 };
 
 upload = (req, res) => {
-    if (!req.files)
-        return res.status(400).send('No files were uploaded.');
-
     const audioData = req.body.data;
     const audio = { content: audioData };
     const config = {
