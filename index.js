@@ -72,7 +72,7 @@ uploadRecording = (req, res) => {
             res.send({ transcription });
         })
         .catch(err => {
-            req.unlink(req.file.path);
+            fs.unlink(req.file.path);
             res.send(err);
         });
 };
