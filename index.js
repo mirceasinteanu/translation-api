@@ -5,6 +5,10 @@ const fs = require('fs');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 const speech = require('@google-cloud/speech');
 const Translate = require('@google-cloud/translate');
 
@@ -47,34 +51,39 @@ onTranslateRequest = (req, res) => {
 
 uploadRecording = (req, res) => {
     const fileName = req.file.path;
-    const file = fs.readFileSync(fileName);
-    const audioBytes = file.toString('base64');
+    const filePathOut = './encodedUploads/output.wav';
 
-    const languageCode = req.body.lang;
+    ffmpeg(fileName)
+        .toFormat('wav')
+        .on('end', () => {
+            const file = fs.readFileSync(filePathOut);
+            const audioBytes = file.toString('base64');
+            const languageCode = req.body.lang;
 
-    const audio = { content: audioBytes };
-    const config = {
-        encoding: 'LINEAR16',
-        sampleRateHertz: 16000,
-        languageCode
-    };
-    const request = {
-        audio, config
-    };
+            const audio = { content: audioBytes };
+            const config = {
+                encoding: 'LINEAR16',
+                sampleRateHertz: 16000,
+                languageCode
+            };
 
-    speechClient
-        .recognize(request)
-        .then(data => {
-            const response = data[0];
-            const transcription = response.results.map(result => result.alternatives[0].transcript).join('\n');
+            const request = { audio, config };
 
-            fs.unlink(req.file.path);
-            res.send({ transcription });
+            speechClient
+                .recognize(request)
+                .then(data => {
+                    const response = data[0];
+                    const transcription = response.results.map(result => result.alternatives[0].transcript).join('\n');
+
+                    fs.unlink(req.file.path);
+                    res.send({ transcription });
+                })
+                .catch(err => {
+                    fs.unlink(req.file.path);
+                    res.send(err);
+                });
         })
-        .catch(err => {
-            fs.unlink(req.file.path);
-            res.send(err);
-        });
+        .save(filePathOut);
 };
 
 app.use(bodyParser.json({limit: '50mb'}));
